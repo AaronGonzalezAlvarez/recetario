@@ -16,6 +16,7 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
@@ -35,6 +36,7 @@ public class Menu {
 		int opcion;
 		Scanner scanner = new Scanner(System.in);
 		listReceta =leerXml();
+		modificarXML2(listReceta);
 		while(menu) {
 			System.out.println("Recetas.");
 			System.out.println("1. Listar recetas.");
@@ -128,7 +130,7 @@ public class Menu {
 		//lo necesario
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance ( );
 		DocumentBuilder builder = factory.newDocumentBuilder();
-		Document documento = (Document) builder.parse( new File("C:\\Users\\DAW_M\\Documents\\xml\\RecetaDOM.xml") );
+		Document documento = (Document) builder.parse( new File("C:\\Users\\Aarón\\Documents\\xml\\RecetaDOM.xml") );
 		
 		/*Node nodoRaiz = ((Node) documento).getFirstChild();
 		System.out.println(nodoRaiz.getNodeName());
@@ -263,10 +265,10 @@ public class Menu {
 		transformer.transform(source, result);
 	}
 	
-	private void createNewXml(ArrayList<Receta> recetas) throws ParserConfigurationException, SAXException, IOException, TransformerException {
+	private void modificarXML(ArrayList<Receta> recetas) throws ParserConfigurationException, SAXException, IOException, TransformerException {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
-		Document documento = (Document) builder.parse(new File("C:\\Users\\DAW_M\\Documents\\xml\\RecetaDOMNew.xml"));
+		Document documento = (Document) builder.parse(new File("C:\\Users\\Aarón\\Documents\\xml\\RecetaDOMNew.xml"));
 
 		Node nodoRaiz = documento.getFirstChild();
 		
@@ -307,6 +309,71 @@ public class Menu {
             DOMSource source = new DOMSource(documento);
             StreamResult result = new StreamResult(new File("C:\\Users\\DAW_M\\Documents\\xml\\RecetaDOM2.xml"));
             transformer.transform(source, result);
+	}
+	
+	private void modificarXML2(ArrayList<Receta> recetas) throws ParserConfigurationException, SAXException, IOException, TransformerException {
+		try {
+            // Crea un DocumentBuilderFactory
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+
+            // Crea un DocumentBuilder para parsear el archivo XML existente
+            DocumentBuilder builder = factory.newDocumentBuilder();
+
+            // Carga el archivo XML existente
+            File archivoXML = new File("C:\\Users\\Aarón\\Documents\\xml\\RecetaDOM.xml");
+            Document document = builder.parse(archivoXML);
+
+            // Realiza las modificaciones en el documento XML (aquí debes realizar las modificaciones necesarias)
+            
+            Node nodoRaiz = document.getFirstChild();
+            NodeList hijos = nodoRaiz.getChildNodes();
+            for(int x=0;x<hijos.getLength();x++) {
+            	Node hijo = hijos.item(x);
+            	if (hijo.getNodeType() == Node.ELEMENT_NODE) {
+                    Element recetaElement = (Element) hijo;
+
+                    String titulo =  recetaElement.getElementsByTagName("titulo").item(0).getTextContent();
+                    String tiempo =recetaElement.getElementsByTagName("tiempo").item(0).getTextContent();
+                    String procedimiento = recetaElement.getElementsByTagName("procedimiento").item(0).getTextContent();
+
+                    Receta receta = new Receta(titulo, tiempo, procedimiento);
+                    NodeList ingredientes = recetaElement.getElementsByTagName("ingrediente");
+
+                    for (int j = 0; j < ingredientes.getLength(); j++) {
+                        Element ingredienteElement = (Element) ingredientes.item(j);
+                        String cantidad = ingredienteElement.getAttribute("cantidad");
+                        String nombre = ((Node) ingredienteElement).getTextContent();
+                       receta.addIngrediente(cantidad, nombre);
+                        
+                    }             
+                    listReceta.add(receta);
+                }
+            	
+            }
+            
+
+            // Crea un TransformerFactory
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+
+            // Crea un Transformer
+            Transformer transformer = transformerFactory.newTransformer();
+
+            // Especifica la fuente de origen (el documento XML modificado)
+            DOMSource source = new DOMSource(document);
+
+            // Especifica la ubicación del archivo de destino (el mismo archivo XML)
+            DOMResult result = new DOMResult();
+
+            // Realiza la transformación para guardar el XML modificado en el mismo archivo
+            transformer.transform(source, result);
+
+            // Vuelve a guardar el documento XML modificado en el mismo archivo
+            javax.xml.transform.TransformerFactory.newInstance().newTransformer().transform((Source) result.getNode(), new javax.xml.transform.stream.StreamResult(archivoXML));
+
+            System.out.println("XML modificado y guardado en el mismo archivo.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 	
 }
